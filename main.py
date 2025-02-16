@@ -6,12 +6,14 @@ def asset_path(filename):
     Crnt_dir=os.getcwd()
     return os.path.join(Crnt_dir,'assets',filename)
 
-def del_temp():
-    deleter(2)
 def del_perctemp():
     deleter(1)
-def delete_all():
+def del_temp():
+    deleter(2)
+def del_prefetch():
     deleter(3)
+def delete_all():
+    deleter(4)
 
 window = Tk()
 window.geometry("472x608")
@@ -75,6 +77,20 @@ button_3.place(
     height=43.0
 )
 
+button_4 = Button(
+    image=button_image_1,
+    borderwidth=0,
+    highlightthickness=0,
+    command=del_prefetch,
+    relief="raised"
+)
+button_4.place(
+    x=355.0,
+    y=252.0,
+    width=87.0,
+    height=43.0
+)
+
 canvas.create_rectangle(
     0.0,
     0.0,
@@ -128,8 +144,18 @@ image_image_4 = PhotoImage(
     file=asset_path("image_4.png"))
 image_4 = canvas.create_image(
     141.0,
-    569.0,
+    270.0,
     image=image_image_4
 )
+
+image_image_5 = PhotoImage(
+    file=asset_path("image_5.png"))
+image_5 = canvas.create_image(
+    141.0,
+    569.0,
+    image=image_image_5
+)
+
+
 window.resizable(False, False)
 window.mainloop()
