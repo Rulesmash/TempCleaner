@@ -1,6 +1,6 @@
 # About
-*WORKS ONLY IN WINDOWS
-A program made to clear temp, %temp% and prefetch files that pile up in windows using just 2 clicks
+*WORKS ONLY IN WINDOWS*
+  A program made to clear temp, %temp% and prefetch files that pile up in windows using just 2 clicks
 Easing the hassle of going through folders or using run everytime inorder to clean it.
 
 # How it works
