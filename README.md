@@ -10,7 +10,8 @@ Use pyinstaller or any packing methods and make sure 'assets' folder is in worki
 OR
 Get standalone exe from Gdrive: [TempCleaner drive](https://drive.google.com/file/d/1h7XS_ZIWnlsalbrNN44MI9tUSRDirIdk/view?usp=drive_link)
 
-# The ui provided will help with clearing each of the folders or all of them
+# Gui
+The ui provided will help with clearing each of the folders or all of them at once
 Only one click is needed to delete the contents in the folders
 
 # Disclamer 
