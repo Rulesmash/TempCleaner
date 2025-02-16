@@ -1,17 +1,16 @@
 # About
-*WORKS ONLY IN WINDOWS*
-  A program made to clear temp, %temp% and prefetch files that pile up in windows using just 2 clicks
+A program made to clear temp, %temp% and prefetch files that pile up in windows using just 2 clicks
 Easing the hassle of going through folders or using run everytime inorder to clean it.
 
 # How it works
-Takes in file locations from environment varialbles and removes the folders that are not in use
+Takes in file locations from environment varialbles and known locations and removes unused files and folders
 
 # How to package into exe
 Use pyinstaller or any packing methods and make sure 'assets' folder is in working directory
 OR
 Get standalone exe from Gdrive: [TempCleaner drive](https://drive.google.com/file/d/1h7XS_ZIWnlsalbrNN44MI9tUSRDirIdk/view?usp=drive_link)
 
-# The ui provided will help with clearing either one of the folders or both
+# The ui provided will help with clearing each of the folders or all of them
 Only one click is needed to delete the contents in the folders
 
 # Disclamer 
