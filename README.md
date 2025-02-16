@@ -1,5 +1,7 @@
 # About
-A program made to clear temp and %temp% files that pile up in windows without having to navigate through folders and run commands
+*WORKS ONLY IN WINDOWS
+A program made to clear temp, %temp% and prefetch files that pile up in windows using just 2 clicks
+Easing the hassle of going through folders or using run everytime inorder to clean it.
 
 # How it works
 Takes in file locations from environment varialbles and removes the folders that are not in use
