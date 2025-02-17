@@ -1,8 +1,9 @@
 import os
 import shutil
-class prefetch:
+class recent_l:
     def __init__(self):
-        mainfile=r"C:\Windows\Prefetch"
+        username=os.getlogin()
+        mainfile=f"C:\\Users\\{username}\\Recent"
         dst_files=os.listdir(mainfile)
         for file in dst_files:
             rmv_file=os.path.join(mainfile,file)

@@ -1,5 +1,6 @@
 from percent_temp import perc_temp
-from prefech import prefetch
+from recents import recent_l
+from prefetch import prefetc
 from local_temp import normTemp
 class deleter():
     def __init__(self,condition):
@@ -9,8 +10,11 @@ class deleter():
             case 2:
                 normTemp()
             case 3:
-                prefetch()
+                prefetc()
             case 4:
+                recent_l()
+            case 5:
                 normTemp()
                 perc_temp()
-                prefetch()
+                prefetc()
+                recent_l()

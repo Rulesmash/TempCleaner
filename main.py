@@ -12,8 +12,10 @@ def del_temp():
     deleter(2)
 def del_prefetch():
     deleter(3)
-def delete_all():
+def del_recent():
     deleter(4)
+def delete_all():
+    deleter(5)
 
 window = Tk()
 window.geometry("472x608")
@@ -81,10 +83,24 @@ button_4 = Button(
     image=button_image_1,
     borderwidth=0,
     highlightthickness=0,
-    command=del_prefetch,
+    command=del_recent,
     relief="raised"
 )
 button_4.place(
+    x=355.0,
+    y=323.0,
+    width=87.0,
+    height=43.0
+)
+
+button_5 = Button(
+    image=button_image_1,
+    borderwidth=0,
+    highlightthickness=0,
+    command=del_prefetch,
+    relief="raised"
+)
+button_5.place(
     x=355.0,
     y=252.0,
     width=87.0,
@@ -150,10 +166,18 @@ image_4 = canvas.create_image(
 
 image_image_5 = PhotoImage(
     file=asset_path("image_5.png"))
+image_4 = canvas.create_image(
+    141.0,
+    341.0,
+    image=image_image_5
+)
+
+image_image_6 = PhotoImage(
+    file=asset_path("image_6.png"))
 image_5 = canvas.create_image(
     141.0,
     569.0,
-    image=image_image_5
+    image=image_image_6
 )
 
 
