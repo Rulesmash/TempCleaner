@@ -1,5 +1,4 @@
 from percent_temp import perc_temp
-from recents import recent_l
 from prefetch import prefetc
 from local_temp import normTemp
 class deleter():
@@ -12,9 +11,6 @@ class deleter():
             case 3:
                 prefetc()
             case 4:
-                recent_l()
-            case 5:
                 normTemp()
                 perc_temp()
                 prefetc()
-                recent_l()

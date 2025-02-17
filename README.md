@@ -2,9 +2,11 @@
 A program made to clear temp, %temp% and prefetch files that pile up in windows using just 2 clicks
 Easing the hassle of going through folders or using run everytime inorder to clean it.
 
-# Things to note
+## Things to note
 The program is ran locally and no data is at risk
-If you encounter an error or a bug please inform
+Only works in windows
+Requires admimstratiom permission for clearing prefetch
+If you encounter any error or bugs please inform
 
 # Known bugs
 preftech does not get cleaned when ran without admin status
