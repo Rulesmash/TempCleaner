@@ -3,9 +3,9 @@ A program made to clear temp, %temp% and prefetch files that pile up in windows 
 Easing the hassle of going through folders or using run everytime inorder to clean it.
 
 ## Things to note
-The program is ran locally and no data is at risk
-Only works in windows
-Requires admimstratiom permission for clearing prefetch
+The program is ran locally and no data is at risk ,
+Only works in windows ,
+Requires admimstratiom permission for clearing prefetch ,
 If you encounter any error or bugs please inform
 
 # Known bugs
