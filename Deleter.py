@@ -1,3 +1,4 @@
+import threading
 from percent_temp import perc_temp
 from prefetch import prefetc
 from local_temp import normTemp
@@ -11,6 +12,9 @@ class deleter():
             case 3:
                 prefetc()
             case 4:
-                normTemp()
-                perc_temp()
-                prefetc()
+                t1=threading.Thread(target=normTemp)
+                t2=threading.Thread(target=perc_temp)
+                t3=threading.Thread(target=prefetc)
+                t1.start()
+                t2.start()
+                t3.start()
