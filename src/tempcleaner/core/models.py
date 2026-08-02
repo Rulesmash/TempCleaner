@@ -23,6 +23,7 @@ class CleanTargetSpec:
     allow_scheduled_default: bool
     resolve_paths: Callable[[], list[Path]]
     allowed_roots: Callable[[], list[Path]]
+    name_predicate: Callable[[Path], bool] | None = None
 
 
 @dataclass
