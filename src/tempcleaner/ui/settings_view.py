@@ -8,9 +8,10 @@ import subprocess
 import threading
 import tkinter as tk
 import webbrowser
+from collections.abc import Callable
 from pathlib import Path
 from tkinter import messagebox, ttk
-from typing import Any, Callable
+from typing import Any
 
 from tempcleaner.config.defaults import default_settings_copy
 from tempcleaner.config.settings import SettingsStore

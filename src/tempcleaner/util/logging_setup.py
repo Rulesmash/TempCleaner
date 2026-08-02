@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from tempcleaner.platform_win.paths import appdata_dir
@@ -23,7 +23,7 @@ def setup_logging(level: str = "INFO", log_dir: Path | None = None) -> Path:
     log_dir = Path(log_dir)
     log_dir.mkdir(parents=True, exist_ok=True)
 
-    date_str = datetime.now().strftime("%Y%m%d")
+    date_str = datetime.now(tz=timezone.utc).astimezone().strftime("%Y%m%d")
     log_file = log_dir / f"tempcleaner-{date_str}.log"
 
     log_level = getattr(logging, str(level).upper(), None)

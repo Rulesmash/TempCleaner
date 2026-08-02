@@ -8,7 +8,6 @@ from pathlib import Path
 from tempcleaner.config.defaults import DEFAULT_SETTINGS
 from tempcleaner.config.settings import SettingsStore
 
-
 REQUIRED_DEFAULT_KEYS = {
     "selected_targets",
     "require_dry_run_before_clean",

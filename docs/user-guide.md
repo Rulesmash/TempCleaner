@@ -104,7 +104,7 @@ See [Settings](#settings). Open logs/settings folders and reset defaults from he
 
 ### Logs tab
 
-- Tail of the current log file; refresh; open in Notepad.
+- Tail of the current log file; refresh; **Open folder** (logs directory).
 
 ### Close behavior
 

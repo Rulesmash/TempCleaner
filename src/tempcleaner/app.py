@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
-from typing import Sequence
+from collections.abc import Sequence
 
 from tempcleaner.version import __version__
 
@@ -46,8 +46,8 @@ def main(argv: list[str] | None = None) -> int:
         return EXIT_ERROR
 
     try:
-        from tempcleaner.util.logging_setup import setup_logging
         from tempcleaner.config.settings import SettingsStore
+        from tempcleaner.util.logging_setup import setup_logging
 
         settings_store = SettingsStore()
         settings = settings_store.load()

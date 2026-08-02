@@ -8,10 +8,10 @@ import pytest
 
 from tempcleaner.platform_win.scheduler import (
     TASK_NAME,
+    build_scheduled_command,
     build_schtasks_create_args,
     build_schtasks_delete_args,
     build_schtasks_query_args,
-    build_scheduled_command,
     install_schedule,
     remove_schedule,
     schedule_exists,
@@ -191,14 +191,13 @@ def test_install_schedule_raises_on_failure():
     fake.stderr = "Access is denied."
     with patch(
         "tempcleaner.platform_win.scheduler.subprocess.run", return_value=fake
-    ):
-        with pytest.raises(RuntimeError, match="Access is denied"):
-            install_schedule(
-                frequency="daily",
-                time_hhmm="03:00",
-                weekday=None,
-                command="x",
-            )
+    ), pytest.raises(RuntimeError, match="Access is denied"):
+        install_schedule(
+            frequency="daily",
+            time_hhmm="03:00",
+            weekday=None,
+            command="x",
+        )
 
 
 def test_remove_schedule_calls_delete():

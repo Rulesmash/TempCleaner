@@ -16,9 +16,9 @@ from tempcleaner.platform_win.updates import (
 __all__ = [
     "TASK_NAME",
     "check_latest_release",
+    "install_schedule",
     "is_admin",
     "is_newer",
-    "install_schedule",
     "relaunch_as_admin",
     "remove_schedule",
     "schedule_exists",

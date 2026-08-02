@@ -482,7 +482,7 @@ class MainWindow:
                 error = exc
             except OSError as exc:
                 error = exc
-            except Exception as exc:  # noqa: BLE001 — surface unexpected to UI
+            except Exception as exc:
                 logger.exception("Worker failed action=%s", action)
                 error = exc
 

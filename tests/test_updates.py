@@ -61,7 +61,7 @@ class _FakeResponse:
     def read(self) -> bytes:
         return self._body
 
-    def __enter__(self) -> _FakeResponse:
+    def __enter__(self) -> Any:
         return self
 
     def __exit__(self, *_args: object) -> None:
@@ -110,7 +110,7 @@ def test_check_latest_release_bad_json(monkeypatch: pytest.MonkeyPatch) -> None:
         def read(self) -> bytes:
             return b"not-json{"
 
-        def __enter__(self) -> BadResp:
+        def __enter__(self) -> Any:
             return self
 
         def __exit__(self, *_a: object) -> None:

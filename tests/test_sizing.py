@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-
-import pytest
 
 from tempcleaner.util.sizing import format_bytes
 
@@ -35,7 +33,7 @@ def test_format_bytes_rejects_or_handles_negative():
     # Negative sizes are not expected; format absolute or raise cleanly.
     # Implementation uses absolute value for display.
     result = format_bytes(-1024)
-    assert result.startswith("-") or result.startswith("1")
+    assert result.startswith(("-", "1"))
     assert "KB" in result or "B" in result
 
 
@@ -43,7 +41,7 @@ def test_setup_logging_returns_dated_log_path(tmp_path: Path):
     from tempcleaner.util.logging_setup import setup_logging
 
     log_file = setup_logging(level="DEBUG", log_dir=tmp_path)
-    today = datetime.now().strftime("%Y%m%d")
+    today = datetime.now(tz=timezone.utc).astimezone().strftime("%Y%m%d")
     assert log_file == tmp_path / f"tempcleaner-{today}.log"
     assert log_file.parent == tmp_path
     assert log_file.name.startswith("tempcleaner-")

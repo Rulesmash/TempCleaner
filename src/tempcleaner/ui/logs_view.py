@@ -6,7 +6,7 @@ import logging
 import os
 import subprocess
 import tkinter as tk
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from tkinter import messagebox, ttk
 
@@ -21,7 +21,7 @@ def current_log_path(log_dir: Path | None = None) -> Path:
     """Return the expected path for today's TempCleaner log file."""
     if log_dir is None:
         log_dir = appdata_dir() / "logs"
-    date_str = datetime.now().strftime("%Y%m%d")
+    date_str = datetime.now(tz=timezone.utc).astimezone().strftime("%Y%m%d")
     return Path(log_dir) / f"tempcleaner-{date_str}.log"
 
 
@@ -30,8 +30,7 @@ def read_log_tail(path: Path, max_lines: int = _DEFAULT_TAIL_LINES) -> str:
 
     Returns a short status message if the file is missing or unreadable.
     """
-    if max_lines < 1:
-        max_lines = 1
+    max_lines = max(max_lines, 1)
     if not path.is_file():
         return f"(log file not found: {path})"
     try:

@@ -5,7 +5,6 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
-
 DEFAULT_SETTINGS: dict[str, Any] = {
     "selected_targets": ["user_temp", "windows_temp"],
     "require_dry_run_before_clean": True,

@@ -11,7 +11,7 @@ import logging
 import re
 import subprocess
 import sys
-from typing import Sequence
+from collections.abc import Sequence
 
 logger = logging.getLogger("tempcleaner.platform_win.scheduler")
 

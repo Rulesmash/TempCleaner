@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import tkinter as tk
+from collections.abc import Callable
 from tkinter import ttk
-from typing import Callable
 
 from tempcleaner.core.models import RiskLevel
 

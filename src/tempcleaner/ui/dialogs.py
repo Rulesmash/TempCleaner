@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import tkinter as tk
+from collections.abc import Callable, Sequence
 from tkinter import ttk
-from typing import Callable, Sequence
 
 from tempcleaner.util.sizing import format_bytes
 from tempcleaner.version import __version__

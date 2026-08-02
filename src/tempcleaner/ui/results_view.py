@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import json
 import tkinter as tk
+from collections.abc import Mapping
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
-from typing import Mapping
 
 from tempcleaner.core.models import EngineReport, TargetCleanStats, TargetScanStats
 from tempcleaner.util.sizing import format_bytes

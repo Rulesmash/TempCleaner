@@ -26,6 +26,4 @@ def is_forbidden_top_level(path: Path) -> bool:
     resolved = path.resolve(strict=False)
     if resolved.parent == resolved:
         return True
-    if resolved == Path.home().resolve(strict=False):
-        return True
-    return False
+    return resolved == Path.home().resolve(strict=False)

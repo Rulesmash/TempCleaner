@@ -5,8 +5,9 @@ from __future__ import annotations
 import logging
 import re
 import tkinter as tk
+from collections.abc import Callable
 from tkinter import messagebox, ttk
-from typing import Any, Callable
+from typing import Any
 
 from tempcleaner.config.settings import SettingsStore
 from tempcleaner.platform_win.scheduler import (
