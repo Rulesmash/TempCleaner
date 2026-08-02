@@ -69,6 +69,10 @@ class MainWindow:
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
         self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
 
+        # Optional quiet startup update check (setting default off)
+        if bool(self._settings.get("check_updates_on_startup", False)):
+            self.root.after(800, self._startup_update_check)
+
     def run(self) -> None:
         self.root.mainloop()
 
@@ -654,6 +658,51 @@ class MainWindow:
 
     def _set_status(self, text: str) -> None:
         self.status_bar.set_text(text)
+
+    def _startup_update_check(self) -> None:
+        """Background update check when check_updates_on_startup is enabled.
+
+        Only prompts when a newer release is found; failures are silent
+        (logged) so startup is never blocked.
+        """
+        import webbrowser
+
+        from tempcleaner.platform_win.updates import check_latest_release
+
+        def work() -> None:
+            available, latest_tag, html_url = check_latest_release(__version__)
+            if not available or latest_tag is None:
+                return
+
+            def notify() -> None:
+                msg = (
+                    f"A newer TempCleaner release is available.\n\n"
+                    f"Current: {__version__}\n"
+                    f"Latest:  {latest_tag}\n"
+                )
+                if html_url:
+                    msg += f"\nOpen release page?\n{html_url}"
+                    if messagebox.askyesno(
+                        "Update available", msg, parent=self.root
+                    ):
+                        try:
+                            webbrowser.open(html_url)
+                        except OSError as exc:
+                            logger.warning("Could not open browser: %s", exc)
+                else:
+                    messagebox.showinfo(
+                        "Update available", msg, parent=self.root
+                    )
+                self._set_status(f"Update available: {latest_tag}")
+
+            try:
+                self.root.after(0, notify)
+            except tk.TclError:
+                pass
+
+        threading.Thread(
+            target=work, name="tc-startup-update", daemon=True
+        ).start()
 
     def _persist_selected_targets(self) -> None:
         """Write current checkbox selection into settings (best-effort)."""

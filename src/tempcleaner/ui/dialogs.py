@@ -4,9 +4,82 @@ from __future__ import annotations
 
 import tkinter as tk
 from tkinter import ttk
-from typing import Sequence
+from typing import Callable, Sequence
 
 from tempcleaner.util.sizing import format_bytes
+from tempcleaner.version import __version__
+
+
+def about_dialog(
+    parent: tk.Misc,
+    *,
+    on_check_updates: Callable[[], None] | None = None,
+) -> None:
+    """Show a simple About dialog (version, license note, optional update check)."""
+    dialog = tk.Toplevel(parent)
+    dialog.title("About TempCleaner")
+    dialog.transient(parent)
+    dialog.resizable(False, False)
+    dialog.grab_set()
+
+    try:
+        parent.update_idletasks()
+        px = parent.winfo_rootx()
+        py = parent.winfo_rooty()
+        pw = parent.winfo_width()
+        ph = parent.winfo_height()
+        dw, dh = 400, 220
+        x = px + max(0, (pw - dw) // 2)
+        y = py + max(0, (ph - dh) // 2)
+        dialog.geometry(f"+{x}+{y}")
+    except tk.TclError:
+        pass
+
+    frame = ttk.Frame(dialog, padding=16)
+    frame.grid(row=0, column=0, sticky="nsew")
+    dialog.columnconfigure(0, weight=1)
+    dialog.rowconfigure(0, weight=1)
+
+    ttk.Label(
+        frame,
+        text=f"TempCleaner {__version__}",
+        font=("", 12, "bold"),
+    ).grid(row=0, column=0, sticky="w", pady=(0, 8))
+
+    ttk.Label(
+        frame,
+        text=(
+            "Windows temp and cache cleaner with dry-run, confirmations, "
+            "and scheduling.\n\n"
+            "Deletes are permanent (not Recycle Bin).\n"
+            "License: GNU GPLv3"
+        ),
+        wraplength=360,
+        justify="left",
+    ).grid(row=1, column=0, sticky="w", pady=(0, 12))
+
+    btn_row = ttk.Frame(frame)
+    btn_row.grid(row=2, column=0, sticky="e")
+
+    def on_close() -> None:
+        dialog.destroy()
+
+    if on_check_updates is not None:
+
+        def _check() -> None:
+            dialog.destroy()
+            on_check_updates()
+
+        ttk.Button(btn_row, text="Check for updates", command=_check).grid(
+            row=0, column=0, padx=(0, 8)
+        )
+
+    close_btn = ttk.Button(btn_row, text="Close", command=on_close)
+    close_btn.grid(row=0, column=1)
+    close_btn.focus_set()
+    dialog.protocol("WM_DELETE_WINDOW", on_close)
+    dialog.bind("<Escape>", lambda _e: on_close())
+    parent.wait_window(dialog)
 
 
 def confirm_delete_dialog(

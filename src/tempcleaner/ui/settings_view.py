@@ -5,7 +5,9 @@ from __future__ import annotations
 import logging
 import os
 import subprocess
+import threading
 import tkinter as tk
+import webbrowser
 from pathlib import Path
 from tkinter import messagebox, ttk
 from typing import Any, Callable
@@ -13,6 +15,9 @@ from typing import Any, Callable
 from tempcleaner.config.defaults import default_settings_copy
 from tempcleaner.config.settings import SettingsStore
 from tempcleaner.platform_win.paths import appdata_dir
+from tempcleaner.platform_win.updates import check_latest_release
+from tempcleaner.ui.dialogs import about_dialog
+from tempcleaner.version import __version__
 
 logger = logging.getLogger("tempcleaner.ui.settings_view")
 
@@ -91,8 +96,17 @@ class SettingsView(ttk.Frame):
             folders, text="Open logs folder", command=self._open_logs_folder
         ).grid(row=0, column=1)
 
+        updates = ttk.LabelFrame(self, text="Updates & about", padding=10)
+        updates.grid(row=3, column=0, sticky="ew", pady=(0, 8))
+        ttk.Button(
+            updates, text="Check for updates", command=self._on_check_updates
+        ).grid(row=0, column=0, padx=(0, 8))
+        ttk.Button(updates, text="About…", command=self._on_about).grid(
+            row=0, column=1
+        )
+
         actions = ttk.Frame(self)
-        actions.grid(row=3, column=0, sticky="ew")
+        actions.grid(row=4, column=0, sticky="ew")
         actions.columnconfigure(2, weight=1)
 
         ttk.Button(actions, text="Save", command=self._on_save).grid(
@@ -168,6 +182,65 @@ class SettingsView(ttk.Frame):
         logger.info("Settings reset to defaults at %s", self._store.path)
         if self._on_settings_saved is not None:
             self._on_settings_saved(dict(data))
+
+    def _on_about(self) -> None:
+        about_dialog(
+            self.winfo_toplevel(),
+            on_check_updates=self._on_check_updates,
+        )
+
+    def _on_check_updates(self) -> None:
+        """Run GitHub Releases check off the UI thread; show result via messagebox."""
+        self._status_var.set("Checking for updates…")
+        parent = self.winfo_toplevel()
+
+        def work() -> None:
+            result = check_latest_release(__version__)
+            parent.after(0, lambda: self._show_update_result(result))
+
+        threading.Thread(target=work, name="tc-update-check", daemon=True).start()
+
+    def _show_update_result(
+        self, result: tuple[bool, str | None, str | None]
+    ) -> None:
+        available, latest_tag, html_url = result
+        parent = self.winfo_toplevel()
+        if latest_tag is None:
+            self._status_var.set("Update check failed (offline or error).")
+            messagebox.showinfo(
+                "Update check",
+                "Could not check for updates.\n\n"
+                "You may be offline, or GitHub is unreachable.\n"
+                f"Current version: {__version__}",
+                parent=parent,
+            )
+            return
+
+        if available:
+            self._status_var.set(f"Update available: {latest_tag}")
+            msg = (
+                f"A newer release is available.\n\n"
+                f"Current: {__version__}\n"
+                f"Latest:  {latest_tag}\n"
+            )
+            if html_url:
+                msg += f"\nOpen release page?\n{html_url}"
+                if messagebox.askyesno("Update available", msg, parent=parent):
+                    try:
+                        webbrowser.open(html_url)
+                    except OSError as exc:
+                        logger.warning("Could not open browser: %s", exc)
+            else:
+                messagebox.showinfo("Update available", msg, parent=parent)
+        else:
+            self._status_var.set(f"Up to date ({latest_tag}).")
+            messagebox.showinfo(
+                "Update check",
+                f"You are on the latest release.\n\n"
+                f"Current: {__version__}\n"
+                f"Latest:  {latest_tag}",
+                parent=parent,
+            )
 
     def _open_settings_folder(self) -> None:
         path = self._store.path.parent
