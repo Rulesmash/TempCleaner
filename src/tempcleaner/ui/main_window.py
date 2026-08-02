@@ -77,12 +77,13 @@ class MainWindow:
         self.root.mainloop()
 
     def _try_set_icon(self) -> None:
-        """Best-effort window icon from project maicon.ico if present."""
+        """Best-effort window icon from assets/maicon.ico if present."""
         from pathlib import Path
 
+        root = Path(__file__).resolve().parents[3]
         candidates = [
-            Path(__file__).resolve().parents[3] / "maicon.ico",
-            Path(__file__).resolve().parents[2] / "maicon.ico",
+            root / "assets" / "maicon.ico",
+            root / "maicon.ico",
         ]
         for path in candidates:
             if path.is_file():
