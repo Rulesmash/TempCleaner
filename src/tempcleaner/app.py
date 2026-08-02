@@ -71,24 +71,10 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def run_gui() -> None:
-    """Open the TempCleaner GUI.
+    """Open the TempCleaner GUI (ttk main window)."""
+    from tempcleaner.ui.main_window import run_gui as _run_gui
 
-    Task 8: minimal Tk placeholder. Task 9 replaces this with the full ttk UI.
-    """
-    import tkinter as tk
-
-    root = tk.Tk()
-    root.title("TempCleaner")
-    root.minsize(320, 160)
-    label = tk.Label(
-        root,
-        text=f"TempCleaner {__version__}\nGUI coming in a later build.",
-        justify="center",
-        padx=40,
-        pady=40,
-    )
-    label.pack(expand=True)
-    root.mainloop()
+    _run_gui()
 
 
 def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
