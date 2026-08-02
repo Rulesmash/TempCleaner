@@ -7,10 +7,12 @@ TempCleaner 2.0 runs from source with **no third-party runtime dependencies**. F
 | Item | Notes |
 |------|--------|
 | OS | Windows (build on Windows for Windows) |
-| Python | 3.10+ matching your support matrix |
+| Python | 3.10+ matching your support matrix, **with Tcl/Tk (tkinter)** |
 | Repo checkout | Project root with `pyproject.toml` and `src/tempcleaner/` |
 | Icon | `assets/maicon.ico` |
 | Dev install | `pip install -e ".[dev]"` (pulls `pyinstaller`) |
+
+Confirm tkinter before packaging: `python -c "import tkinter"`. Some embeddable or minimal Python installs omit Tcl/Tk; without it PyInstaller excludes the GUI and `scripts/build_exe.ps1` fails its preflight check.
 
 ```powershell
 python -m venv .venv
@@ -19,16 +21,20 @@ python -m pip install -U pip
 pip install -e ".[dev]"
 ```
 
-Optional helper scripts (added with CI/packaging task when present):
+Helper scripts:
 
 - `scripts/install_dev.ps1` — create venv + install editable with `[dev]`
-- `scripts/build_exe.ps1` — wrap the PyInstaller invocation below
-
-If those scripts are not in the tree yet, use the manual commands in this document.
+- `scripts/build_exe.ps1` — recommended PyInstaller wrapper (same flags as below)
 
 ## Recommended PyInstaller command
 
-From the **repository root**:
+Prefer the helper (activates `.venv` when present):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\build_exe.ps1
+```
+
+Or from the **repository root** manually:
 
 ```powershell
 pyinstaller `
@@ -36,7 +42,9 @@ pyinstaller `
   --windowed `
   --name TempCleaner `
   --icon assets\maicon.ico `
-  -m tempcleaner
+  --paths src `
+  --collect-submodules tempcleaner `
+  src\tempcleaner\__main__.py
 ```
 
 | Flag | Purpose |
@@ -45,7 +53,11 @@ pyinstaller `
 | `--windowed` | No console window for GUI use (GUI default path) |
 | `--name TempCleaner` | Output base name |
 | `--icon assets\maicon.ico` | Window/EXE icon |
-| `-m tempcleaner` | Entry via the `tempcleaner` package (`__main__` / app) |
+| `--paths src` | Resolve `tempcleaner` package imports from the src layout |
+| `--collect-submodules tempcleaner` | Bundle deferred imports (UI, config, core, etc.) |
+| `src\tempcleaner\__main__.py` | Real entry script (`tempcleaner.app:main`) |
+
+**Note:** Do **not** use `pyinstaller -m tempcleaner` on Windows. For PyInstaller, `-m` is short for `--manifest`, not Python’s module mode.
 
 ### Output locations
 
@@ -60,7 +72,7 @@ Exact layout depends on PyInstaller version and whether you switch to `--onefile
 ### Onefile example (optional)
 
 ```powershell
-pyinstaller --noconfirm --windowed --onefile --name TempCleaner --icon assets\maicon.ico -m tempcleaner
+pyinstaller --noconfirm --windowed --onefile --name TempCleaner --icon assets\maicon.ico --paths src --collect-submodules tempcleaner src\tempcleaner\__main__.py
 ```
 
 Onefile starts slower (self-extract) but is easier to zip for GitHub Releases.

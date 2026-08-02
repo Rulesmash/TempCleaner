@@ -192,8 +192,12 @@ Packaging uses **PyInstaller** (dev dependency). Full steps: [docs/packaging.md]
 Short form (after `pip install -e ".[dev]"`):
 
 ```powershell
-# From repo root; example (Task 15 may add scripts/build_exe.ps1)
-pyinstaller --noconfirm --windowed --name TempCleaner --icon assets\maicon.ico -m tempcleaner
+# Preferred: helper script (activates .venv if present)
+powershell -ExecutionPolicy Bypass -File scripts\build_exe.ps1
+
+# Or manual (from repo root). Entry must be a .py path — do not use -m
+# (on Windows PyInstaller, -m is --manifest, not Python module mode).
+pyinstaller --noconfirm --windowed --name TempCleaner --icon assets\maicon.ico --paths src --collect-submodules tempcleaner src\tempcleaner\__main__.py
 ```
 
 Output lands under `dist/`. Runtime still needs no third-party wheels on the end-user machine.
