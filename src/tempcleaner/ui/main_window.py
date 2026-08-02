@@ -13,10 +13,11 @@ from tempcleaner.core.engine import CleanEngine, NotConfirmedError
 from tempcleaner.core.models import CleanTargetSpec, EngineReport, RiskLevel
 from tempcleaner.core.targets import all_targets, default_enabled_ids
 from tempcleaner.platform_win.admin import is_admin, relaunch_as_admin
-from tempcleaner.ui.components import AdminBadge, PlaceholderTab, StatusBar, risk_tag_text
+from tempcleaner.ui.components import AdminBadge, StatusBar, risk_tag_text
 from tempcleaner.ui.dialogs import confirm_delete_dialog
 from tempcleaner.ui.logs_view import LogsView
 from tempcleaner.ui.results_view import ResultsView
+from tempcleaner.ui.schedule_view import ScheduleView
 from tempcleaner.ui.settings_view import SettingsView
 from tempcleaner.util.sizing import format_bytes
 from tempcleaner.version import __version__
@@ -124,12 +125,15 @@ class MainWindow:
         self.results_view = ResultsView(self.notebook, padding=10)
         self.notebook.add(self.results_view, text="Results")
 
-        self.schedule_frame = PlaceholderTab(
+        self.schedule_view = ScheduleView(
             self.notebook,
-            "Schedule",
-            "Schedule tab — Task Scheduler integration in a later build.",
+            store=self._settings_store,
+            settings=self._settings,
+            get_selected_targets=self._selected_target_ids,
+            on_settings_updated=self._on_schedule_settings_updated,
+            padding=10,
         )
-        self.notebook.add(self.schedule_frame, text="Schedule")
+        self.notebook.add(self.schedule_view, text="Schedule")
 
         self.settings_view = SettingsView(
             self.notebook,
@@ -592,6 +596,9 @@ class MainWindow:
         if previous_selected:
             self._settings["selected_targets"] = list(previous_selected)
         self._populate_target_checkboxes()
+        # Keep Schedule tab widgets in sync (non-schedule keys may have changed)
+        self.schedule_view.load_from_settings(self._settings)
+        self.schedule_view.refresh_status()
         self._set_status("Settings saved")
         logger.info(
             "Settings applied: require_dry_run=%s allow_advanced=%s close_minimizes=%s",
@@ -600,8 +607,30 @@ class MainWindow:
             settings.get("close_minimizes"),
         )
 
+    def _on_schedule_settings_updated(self, settings: dict[str, Any]) -> None:
+        """Apply schedule-related settings saved from the Schedule tab."""
+        previous_selected = self._selected_target_ids()
+        self._settings = dict(settings)
+        if previous_selected:
+            self._settings["selected_targets"] = list(previous_selected)
+        # Settings tab keeps its own copy of schedule-related keys
+        self.settings_view.load_from_settings(self._settings)
+        enabled = bool(settings.get("scheduled_clean_enabled", False))
+        self._set_status(
+            "Schedule applied"
+            if enabled
+            else "Schedule disabled / removed"
+        )
+        logger.info(
+            "Schedule settings updated: enabled=%s targets=%s freq=%s time=%s",
+            settings.get("scheduled_clean_enabled"),
+            settings.get("scheduled_targets"),
+            settings.get("schedule_frequency"),
+            settings.get("schedule_time"),
+        )
+
     def _on_tab_changed(self, _event: object = None) -> None:
-        """Refresh Logs when that tab is selected."""
+        """Refresh Logs / Schedule status when those tabs are selected."""
         try:
             current = self.notebook.select()
         except tk.TclError:
@@ -609,8 +638,11 @@ class MainWindow:
         if not current:
             return
         try:
-            if str(self.notebook.nametowidget(current)) == str(self.logs_view):
+            widget = self.notebook.nametowidget(current)
+            if str(widget) == str(self.logs_view):
                 self.logs_view.refresh()
+            elif str(widget) == str(self.schedule_view):
+                self.schedule_view.refresh_status()
         except tk.TclError:
             pass
 
