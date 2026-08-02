@@ -15,6 +15,9 @@ from tempcleaner.core.targets import all_targets, default_enabled_ids
 from tempcleaner.platform_win.admin import is_admin, relaunch_as_admin
 from tempcleaner.ui.components import AdminBadge, PlaceholderTab, StatusBar, risk_tag_text
 from tempcleaner.ui.dialogs import confirm_delete_dialog
+from tempcleaner.ui.logs_view import LogsView
+from tempcleaner.ui.results_view import ResultsView
+from tempcleaner.ui.settings_view import SettingsView
 from tempcleaner.util.sizing import format_bytes
 from tempcleaner.version import __version__
 
@@ -28,7 +31,7 @@ def run_gui() -> None:
 
 
 class MainWindow:
-    """Application shell with notebook tabs; Clean tab fully wired."""
+    """Application shell with notebook tabs; Clean + Results + Settings + Logs wired."""
 
     def __init__(self) -> None:
         self.root = tk.Tk()
@@ -63,6 +66,7 @@ class MainWindow:
         self._set_status("Ready")
 
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
+        self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
 
     def run(self) -> None:
         self.root.mainloop()
@@ -117,12 +121,8 @@ class MainWindow:
         self.clean_frame = ttk.Frame(self.notebook, padding=10)
         self.notebook.add(self.clean_frame, text="Clean")
 
-        self.results_frame = PlaceholderTab(
-            self.notebook,
-            "Results",
-            "Results tab — detailed report view in a later build.",
-        )
-        self.notebook.add(self.results_frame, text="Results")
+        self.results_view = ResultsView(self.notebook, padding=10)
+        self.notebook.add(self.results_view, text="Results")
 
         self.schedule_frame = PlaceholderTab(
             self.notebook,
@@ -131,19 +131,17 @@ class MainWindow:
         )
         self.notebook.add(self.schedule_frame, text="Schedule")
 
-        self.settings_frame = PlaceholderTab(
+        self.settings_view = SettingsView(
             self.notebook,
-            "Settings",
-            "Settings tab — preferences UI in a later build.",
+            store=self._settings_store,
+            settings=self._settings,
+            on_settings_saved=self._on_settings_saved,
+            padding=10,
         )
-        self.notebook.add(self.settings_frame, text="Settings")
+        self.notebook.add(self.settings_view, text="Settings")
 
-        self.logs_frame = PlaceholderTab(
-            self.notebook,
-            "Logs",
-            "Logs tab — log viewer in a later build.",
-        )
-        self.notebook.add(self.logs_frame, text="Logs")
+        self.logs_view = LogsView(self.notebook, padding=10)
+        self.notebook.add(self.logs_view, text="Logs")
 
         # Status bar
         self.status_bar = StatusBar(self.root)
@@ -386,8 +384,7 @@ class MainWindow:
                 "Dry-run required",
                 "A dry-run for the current target selection is required before "
                 "cleaning.\n\nRun Dry-run first, or disable this requirement in "
-                "Settings (later build: edit settings.json "
-                "require_dry_run_before_clean).",
+                "the Settings tab (Require dry-run before clean).",
                 parent=self.root,
             )
             self._set_status("Clean blocked: dry-run required for current selection")
@@ -515,12 +512,13 @@ class MainWindow:
         total_bytes = sum(t.total_bytes for t in report.targets)
         self._last_total_bytes = total_bytes
         self._update_summary(report)
+        self._populate_results(report)
 
         if action == "dry_run" and not report.cancelled:
             self.last_dry_run_signature = frozenset(target_ids)
-            # Design: dry-run auto-switches to Results (placeholder for now)
+            # Design: dry-run auto-switches to Results
             try:
-                self.notebook.select(self.results_frame)
+                self.notebook.select(self.results_view)
             except tk.TclError:
                 pass
 
@@ -581,6 +579,41 @@ class MainWindow:
         )
         self._summary_var.set("\n".join(lines))
 
+    def _populate_results(self, report: EngineReport) -> None:
+        """Push the engine report into the Results tab."""
+        names = {tid: spec.name for tid, spec in self._targets.items()}
+        self.results_view.set_report(report, target_names=names)
+
+    def _on_settings_saved(self, settings: dict[str, Any]) -> None:
+        """Apply settings from the Settings tab to live MainWindow state."""
+        previous_selected = self._selected_target_ids()
+        self._settings = dict(settings)
+        # Keep Clean-tab checks when rebuilding visibility (advanced on/off)
+        if previous_selected:
+            self._settings["selected_targets"] = list(previous_selected)
+        self._populate_target_checkboxes()
+        self._set_status("Settings saved")
+        logger.info(
+            "Settings applied: require_dry_run=%s allow_advanced=%s close_minimizes=%s",
+            settings.get("require_dry_run_before_clean"),
+            settings.get("allow_advanced_targets"),
+            settings.get("close_minimizes"),
+        )
+
+    def _on_tab_changed(self, _event: object = None) -> None:
+        """Refresh Logs when that tab is selected."""
+        try:
+            current = self.notebook.select()
+        except tk.TclError:
+            return
+        if not current:
+            return
+        try:
+            if str(self.notebook.nametowidget(current)) == str(self.logs_view):
+                self.logs_view.refresh()
+        except tk.TclError:
+            pass
+
     def _set_action_buttons_enabled(self, enabled: bool) -> None:
         state = ["!disabled"] if enabled else ["disabled"]
         self._scan_btn.state(state)
@@ -589,6 +622,19 @@ class MainWindow:
 
     def _set_status(self, text: str) -> None:
         self.status_bar.set_text(text)
+
+    def _persist_selected_targets(self) -> None:
+        """Write current checkbox selection into settings (best-effort)."""
+        selected = self._selected_target_ids()
+        if not selected:
+            return
+        data = dict(self._settings)
+        data["selected_targets"] = selected
+        try:
+            self._settings_store.save(data)
+            self._settings = data
+        except OSError as exc:
+            logger.warning("Could not persist selected_targets: %s", exc)
 
     def _on_close(self) -> None:
         if self._busy:
@@ -599,4 +645,11 @@ class MainWindow:
             ):
                 return
             self._cancel_event.set()
+
+        self._persist_selected_targets()
+
+        if bool(self._settings.get("close_minimizes", False)):
+            self.root.iconify()
+            return
+
         self.root.destroy()
