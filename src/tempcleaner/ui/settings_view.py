@@ -42,12 +42,14 @@ class SettingsView(ttk.Frame):
         store: SettingsStore,
         settings: dict[str, Any],
         on_settings_saved: Callable[[dict[str, Any]], None] | None = None,
+        on_exit: Callable[[], None] | None = None,
         **kwargs: object,
     ) -> None:
         super().__init__(parent, **kwargs)  # type: ignore[arg-type]
         self._store = store
         self._settings = dict(settings)
         self._on_settings_saved = on_settings_saved
+        self._on_exit = on_exit
         self._bool_vars: dict[str, tk.BooleanVar] = {}
         self._log_level_var = tk.StringVar(value=str(settings.get("log_level", "INFO")))
         self._status_var = tk.StringVar(value="")
@@ -103,8 +105,11 @@ class SettingsView(ttk.Frame):
             updates, text="Check for updates", command=self._on_check_updates
         ).grid(row=0, column=0, padx=(0, 8))
         ttk.Button(updates, text="About…", command=self._on_about).grid(
-            row=0, column=1
+            row=0, column=1, padx=(0, 8)
         )
+        ttk.Button(
+            updates, text="Exit application", command=self._on_exit_application
+        ).grid(row=0, column=2)
 
         actions = ttk.Frame(self)
         actions.grid(row=4, column=0, sticky="ew")
@@ -161,8 +166,7 @@ class SettingsView(ttk.Frame):
         if not messagebox.askyesno(
             "Reset settings",
             "Reset all preferences to defaults?\n\n"
-            "This will overwrite settings.json after you confirm Save, "
-            "or apply defaults immediately if you choose Yes.",
+            "Defaults will be applied and saved to settings.json immediately.",
             parent=self.winfo_toplevel(),
         ):
             return
@@ -183,6 +187,16 @@ class SettingsView(ttk.Frame):
         logger.info("Settings reset to defaults at %s", self._store.path)
         if self._on_settings_saved is not None:
             self._on_settings_saved(dict(data))
+
+    def _on_exit_application(self) -> None:
+        """Always exit (destroy main window); ignores close_minimizes."""
+        if self._on_exit is not None:
+            self._on_exit()
+            return
+        try:
+            self.winfo_toplevel().destroy()
+        except tk.TclError:
+            pass
 
     def _on_about(self) -> None:
         about_dialog(

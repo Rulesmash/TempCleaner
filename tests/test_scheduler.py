@@ -182,6 +182,11 @@ def test_install_schedule_calls_subprocess_with_builder_args():
     assert kwargs.get("capture_output") is True
     assert kwargs.get("text") is True
     assert kwargs.get("check") is False
+    # Windows: hide console window for schtasks
+    import sys
+
+    if sys.platform == "win32":
+        assert kwargs.get("creationflags") == 0x08000000
 
 
 def test_install_schedule_raises_on_failure():
@@ -212,6 +217,45 @@ def test_remove_schedule_calls_delete():
     args = run.call_args[0][0]
     assert "/Delete" in args or "/DELETE" in [a.upper() for a in args]
     assert TASK_NAME in args
+
+
+def test_remove_schedule_locale_safe_when_already_absent():
+    """Delete failure is success if schedule_exists() is still false."""
+    delete_fail = MagicMock()
+    delete_fail.returncode = 1
+    # Non-English / unrecognized message (must not rely on English phrases)
+    delete_fail.stdout = ""
+    delete_fail.stderr = "FEHLER: Die angegebene Aufgabe konnte nicht gefunden werden."
+
+    query_missing = MagicMock()
+    query_missing.returncode = 1
+    query_missing.stdout = ""
+    query_missing.stderr = "..."
+
+    with patch(
+        "tempcleaner.platform_win.scheduler.subprocess.run",
+        side_effect=[delete_fail, query_missing],
+    ) as run:
+        remove_schedule()  # must not raise
+    assert run.call_count == 2
+
+
+def test_remove_schedule_raises_when_task_still_exists():
+    delete_fail = MagicMock()
+    delete_fail.returncode = 1
+    delete_fail.stdout = ""
+    delete_fail.stderr = "Access is denied."
+
+    query_ok = MagicMock()
+    query_ok.returncode = 0
+    query_ok.stdout = "TaskName"
+    query_ok.stderr = ""
+
+    with patch(
+        "tempcleaner.platform_win.scheduler.subprocess.run",
+        side_effect=[delete_fail, query_ok],
+    ), pytest.raises(RuntimeError, match="Access is denied"):
+        remove_schedule()
 
 
 def test_schedule_exists_true_false():

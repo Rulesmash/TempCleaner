@@ -32,6 +32,11 @@ def _thumbcache_name_predicate(path: Path) -> bool:
     )
 
 
+def _recent_lnk_name_predicate(path: Path) -> bool:
+    """Recent Items: only delete shortcut (.lnk) children (case-insensitive)."""
+    return fnmatch.fnmatch(path.name.lower(), "*.lnk")
+
+
 def _build_targets() -> dict[str, CleanTargetSpec]:
     user_temp_paths, user_temp_roots = _single_path_roots(win_paths.user_temp)
     windows_temp_paths, windows_temp_roots = _single_path_roots(win_paths.windows_temp)
@@ -78,13 +83,14 @@ def _build_targets() -> dict[str, CleanTargetSpec]:
         "recent": CleanTargetSpec(
             id="recent",
             name="Recent Items",
-            description="Recent documents and jump-list shortcuts.",
+            description="Recent document shortcuts (.lnk only).",
             risk=RiskLevel.SAFE,
             requires_admin=False,
             enabled_by_default=False,
             allow_scheduled_default=False,
             resolve_paths=recent_paths,
             allowed_roots=recent_roots,
+            name_predicate=_recent_lnk_name_predicate,
         ),
         "thumbcache": CleanTargetSpec(
             id="thumbcache",

@@ -86,12 +86,15 @@ def confirm_delete_dialog(
     parent: tk.Misc,
     target_names: Sequence[str],
     total_bytes: int | None = None,
+    file_count: int | None = None,
+    dir_count: int | None = None,
 ) -> bool:
     """Show permanent-delete confirmation.
 
-    Displays target names, optional total size, and a permanent-delete warning.
-    Delete is disabled until the user checks the acknowledgment box.
-    Cancel is the default action (Enter must not trigger delete by default).
+    Displays target names, optional total size and file/dir counts, and a
+    permanent-delete warning. Delete is disabled until the user checks the
+    acknowledgment box. Cancel is the default action (Enter must not trigger
+    delete by default).
 
     Returns:
         True if the user confirmed delete; False if cancelled.
@@ -113,7 +116,7 @@ def confirm_delete_dialog(
         ph = parent.winfo_height()
         dialog.update_idletasks()
         # Approximate size before pack finishes; place roughly centered
-        dw, dh = 420, 280
+        dw, dh = 420, 300
         x = px + max(0, (pw - dw) // 2)
         y = py + max(0, (ph - dh) // 2)
         dialog.geometry(f"+{x}+{y}")
@@ -143,15 +146,20 @@ def confirm_delete_dialog(
         row=2, column=0, columnspan=2, sticky="w", pady=(0, 4)
     )
 
+    estimate_parts: list[str] = []
     if total_bytes is not None:
-        size_text = f"Estimated size: {format_bytes(total_bytes)}"
-        ttk.Label(frame, text=size_text).grid(
-            row=3, column=0, columnspan=2, sticky="w", pady=(0, 10)
-        )
+        estimate_parts.append(f"size {format_bytes(total_bytes)}")
+    if file_count is not None:
+        estimate_parts.append(f"files {file_count}")
+    if dir_count is not None:
+        estimate_parts.append(f"dirs {dir_count}")
+    if estimate_parts:
+        size_text = "Estimated: " + ", ".join(estimate_parts)
     else:
-        ttk.Label(frame, text="Estimated size: unknown (run Scan or Dry-run first)").grid(
-            row=3, column=0, columnspan=2, sticky="w", pady=(0, 10)
-        )
+        size_text = "Estimated size/counts: unknown (run Scan or Dry-run first)"
+    ttk.Label(frame, text=size_text, wraplength=380).grid(
+        row=3, column=0, columnspan=2, sticky="w", pady=(0, 10)
+    )
 
     ack_var = tk.BooleanVar(value=False)
     ack = ttk.Checkbutton(

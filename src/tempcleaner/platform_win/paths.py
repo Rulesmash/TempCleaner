@@ -17,11 +17,13 @@ def user_temp() -> Path:
 
 
 def windows_temp() -> Path:
-    return Path(r"C:\Windows\Temp")
+    system_root = os.environ.get("SystemRoot", r"C:\Windows")
+    return Path(system_root) / "Temp"
 
 
 def prefetch() -> Path:
-    return Path(r"C:\Windows\Prefetch")
+    system_root = os.environ.get("SystemRoot", r"C:\Windows")
+    return Path(system_root) / "Prefetch"
 
 
 def recent_dir() -> Path:

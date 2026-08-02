@@ -53,8 +53,10 @@ class MainWindow:
 
         # Session dry-run gate: frozenset of target ids from last successful dry-run
         self.last_dry_run_signature: frozenset[str] | None = None
-        # Optional size hint from last scan/dry-run for confirm dialog
+        # Optional size/count hints from last scan/dry-run for confirm dialog
         self._last_total_bytes: int | None = None
+        self._last_file_count: int | None = None
+        self._last_dir_count: int | None = None
         self._last_report: EngineReport | None = None
 
         # target_id -> BooleanVar for checkboxes
@@ -62,6 +64,7 @@ class MainWindow:
         self._target_checkbuttons: dict[str, ttk.Checkbutton] = {}
 
         self._build_shell()
+        self._build_menu()
         self._build_clean_tab()
         self._refresh_admin_ui()
         self._set_status("Ready")
@@ -145,6 +148,7 @@ class MainWindow:
             store=self._settings_store,
             settings=self._settings,
             on_settings_saved=self._on_settings_saved,
+            on_exit=self._on_exit,
             padding=10,
         )
         self.notebook.add(self.settings_view, text="Settings")
@@ -155,6 +159,14 @@ class MainWindow:
         # Status bar
         self.status_bar = StatusBar(self.root)
         self.status_bar.grid(row=2, column=0, sticky="ew")
+
+    def _build_menu(self) -> None:
+        """File menu with Exit that always destroys (ignores close_minimizes)."""
+        menubar = tk.Menu(self.root)
+        file_menu = tk.Menu(menubar, tearoff=0)
+        file_menu.add_command(label="Exit", command=self._on_exit)
+        menubar.add_cascade(label="File", menu=file_menu)
+        self.root.config(menu=menubar)
 
     # ---------------------------------------------------------------- Clean tab
     def _build_clean_tab(self) -> None:
@@ -404,6 +416,8 @@ class MainWindow:
             self.root,
             target_names=names,
             total_bytes=self._last_total_bytes,
+            file_count=self._last_file_count,
+            dir_count=self._last_dir_count,
         ):
             self._set_status("Clean cancelled (confirm dialog)")
             return
@@ -519,7 +533,11 @@ class MainWindow:
         assert report is not None
         self._last_report = report
         total_bytes = sum(t.total_bytes for t in report.targets)
+        total_files = sum(t.file_count for t in report.targets)
+        total_dirs = sum(t.dir_count for t in report.targets)
         self._last_total_bytes = total_bytes
+        self._last_file_count = total_files
+        self._last_dir_count = total_dirs
         self._update_summary(report)
         self._populate_results(report)
 
@@ -718,7 +736,23 @@ class MainWindow:
         except OSError as exc:
             logger.warning("Could not persist selected_targets: %s", exc)
 
+    def _on_exit(self) -> None:
+        """Always destroy the application (File → Exit), ignoring close_minimizes."""
+        self._request_close(force_destroy=True)
+
     def _on_close(self) -> None:
+        """Window X / WM_DELETE_WINDOW: may minimize when close_minimizes is on."""
+        self._request_close(force_destroy=False)
+
+    def _request_close(self, *, force_destroy: bool) -> None:
+        """Shared close path for X button and File → Exit.
+
+        When *force_destroy* is True (explicit Exit), always destroy.
+        When the user confirms cancel-and-exit while busy, always destroy
+        (never minimize) so the exit is not trapped by close_minimizes.
+        Otherwise, honor close_minimizes for the window X button only.
+        """
+        exiting_while_busy = False
         if self._busy:
             if not messagebox.askyesno(
                 "Operation in progress",
@@ -727,8 +761,14 @@ class MainWindow:
             ):
                 return
             self._cancel_event.set()
+            exiting_while_busy = True
 
         self._persist_selected_targets()
+
+        # Explicit Exit, or confirmed cancel-and-exit while busy → always destroy
+        if force_destroy or exiting_while_busy:
+            self.root.destroy()
+            return
 
         if bool(self._settings.get("close_minimizes", False)):
             self.root.iconify()
