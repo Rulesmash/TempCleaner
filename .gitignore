@@ -27,3 +27,6 @@ settings.local.json
 !assets/**
 .worktrees/
 .superpowers/
+
+.venv312/
+
